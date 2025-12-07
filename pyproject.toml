@@ -1,0 +1,14 @@
+[project]
+name = "datavalgen"
+version = "0.1.0"
+description = "Tiny tool with the aim of providing a common way to validate (and generate) simple data."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pandas==2.3.3",
+    "pydantic==2.12.5",
+    "polyfactory==3.1.0",
+]
+
+[project.scripts]
+datavalgen = "datavalgen.__main__:main"

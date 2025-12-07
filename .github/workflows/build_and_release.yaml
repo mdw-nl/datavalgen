@@ -1,0 +1,51 @@
+name: Build and publish image
+
+on:
+  push:
+    tags:
+      - "release/v*"
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # needed for GitHub Container Registry (GHCR)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute image metadata
+        id: meta
+        # bash shenanigans to lower-case, etc
+        run: |
+          # lower-case repo: owner/repo -> owner/repo
+          REPO_LC="${GITHUB_REPOSITORY,,}"
+
+          # strip "release/" prefix from tag name
+          TAG_VERSION="${GITHUB_REF_NAME#release/}"
+
+          echo "image_name=$REPO_LC" >> "$GITHUB_OUTPUT"
+          echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        # https://github.com/docker/login-action/releases/tag/v3.6.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        # https://github.com/docker/build-push-action/releases/tag/v6.18.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.image_name }}:latest
+            ghcr.io/${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.tag_version }}

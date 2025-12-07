@@ -1,0 +1,3 @@
+- Fake data generation: either simplify or make it more robust
+- Type hinting: some hinting in code, not finished. Good oportunity to try mypy?
+- cosign image?
