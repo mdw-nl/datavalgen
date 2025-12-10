@@ -1,6 +1,6 @@
 [project]
 name = "datavalgen"
-version = "0.1.0"
+version = "0.1.1"
 description = "Tiny tool with the aim of providing a common way to validate (and generate) simple data."
 readme = "README.md"
 requires-python = ">=3.13"
