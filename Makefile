@@ -19,3 +19,8 @@ build:
 .PHONY: tag
 tag:
 	git tag "$(GIT_TAG)"
+
+# tests
+.PHONY: test
+test:
+	pytest tests/

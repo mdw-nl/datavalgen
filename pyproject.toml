@@ -12,3 +12,6 @@ dependencies = [
 
 [project.scripts]
 datavalgen = "datavalgen.__main__:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
