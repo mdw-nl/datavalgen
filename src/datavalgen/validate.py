@@ -7,7 +7,7 @@ from pydantic_core import ErrorDetails, ValidationError
 
 def validate_dataframe(
     df: pd.DataFrame, model: type[BaseModel]
-) -> list[ErrorDetails] | int:
+) -> list[ErrorDetails]:
     """
     Validate each row of a DataFrame against a Pydantic model.
 
@@ -20,8 +20,8 @@ def validate_dataframe(
         model: The Pydantic BaseModel subclass used for validation.
 
     Returns:
-        list[ErrorDetails]: Detailed validation errors when `no_details` is False.
-            (Empty list means no errors.)
+        list[ErrorDetails]: Detailed validation errors.
+            Empty list means no errors.
 
     Notes:
         Validation errors are caught and returned; no exception is raised.
