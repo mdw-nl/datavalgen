@@ -67,11 +67,18 @@ def parse_args(argv) -> Any:
 
     args: argparse.Namespace = p.parse_args(argv)
 
-    if args.factory is None and not args.list:
-        sys.exit(
+    # handle --list early, just list factories
+    if args.list:
+        return args
+
+    if args.factory is None:
+        p.error(
             "Please provide a valid -f/--factory argument or set the "
             "DATAVALGEN_FACTORY environment variable."
         )
+
+    if not args.output and not args.show_df:
+        p.error("Please provide either -o/--output or --show-df.")
 
     return args
 
