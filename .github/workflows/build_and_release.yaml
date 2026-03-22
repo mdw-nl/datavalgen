@@ -3,7 +3,7 @@ name: Build and publish image
 on:
   push:
     tags:
-      - "release/v*"
+      - "v*.*.*"
 
 env:
   REGISTRY: ghcr.io
@@ -15,6 +15,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # GitHub actions doens't offer regexes fir on:push:tags above.. so
+      # we just fail fast here I guess....
+      - name: Validate release tag format
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag '${GITHUB_REF_NAME}'."
+            echo "Expected v<major>.<minor>.<patch> (for example: v0.2.0)."
+            exit 1
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -46,8 +56,8 @@ jobs:
           # lower-case repo: owner/repo -> owner/repo
           REPO_LC="${GITHUB_REPOSITORY,,}"
 
-          # strip "release/" prefix from tag name
-          TAG_VERSION="${GITHUB_REF_NAME#release/}"
+          # tag name from release push (for example: v0.2.0)
+          TAG_VERSION="${GITHUB_REF_NAME}"
 
           echo "image_name=$REPO_LC" >> "$GITHUB_OUTPUT"
           echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
