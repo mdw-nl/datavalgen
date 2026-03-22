@@ -27,6 +27,7 @@ venv/
 
 # uv project cache (if it ever appears)
 .uv-cache/
+uv.lock
 
 # ---- Packaging / build artifacts ----
 build/
