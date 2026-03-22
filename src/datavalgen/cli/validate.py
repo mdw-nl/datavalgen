@@ -10,8 +10,8 @@ from datavalgen.cli.utils.print import print_model_list
 from pydantic import BaseModel
 from datavalgen.plugins import get_model
 
-from datavalgen.readcsv import read_csv_raw
-from datavalgen.reporterrors import format_val_errors
+from datavalgen.read_csv import read_csv_raw
+from datavalgen.report_errors import format_val_errors
 from datavalgen.validate import validate_column_names, validate_dataframe
 
 

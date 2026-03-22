@@ -1,6 +1,6 @@
 import pandas as pd
 
-from datavalgen.safevalidate import safe_validate_dataframe
+from datavalgen.safe_validate import safe_validate_dataframe
 from .test_validate import SimpleModel
 
 

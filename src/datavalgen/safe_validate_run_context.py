@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 
 from datavalgen.plugins import get_model
-from datavalgen.readcsv import read_csv_raw
-from datavalgen.safevalidate import safe_validate_dataframe
+from datavalgen.read_csv import read_csv_raw
+from datavalgen.safe_validate import safe_validate_dataframe
 from datavalgen.validate import validate_column_names
 from run_context import run_context
 

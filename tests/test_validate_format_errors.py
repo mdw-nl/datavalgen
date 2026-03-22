@@ -1,5 +1,5 @@
 import pandas as pd
-from datavalgen.reporterrors import format_val_errors
+from datavalgen.report_errors import format_val_errors
 from datavalgen.validate import validate_dataframe
 from .test_validate import SimpleModel
 
