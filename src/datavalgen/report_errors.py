@@ -37,9 +37,11 @@ def format_val_errors(errors: list[ErrorDetails], max_errors: int = 10) -> str:
 
     for err in errors:
         loc = err["loc"]
-        # Cell-level errors look like (row_idx, "field_name", ...)
-        if len(loc) >= 2 and isinstance(loc[0], int):
-            row, col = loc[:2]
+        # Cell-level errors look like (row_idx, "field_name", ...).
+        # We narrow both tuple elements so static type checkers know key type.
+        if len(loc) >= 2 and isinstance(loc[0], int) and isinstance(loc[1], str):
+            row = loc[0]
+            col = loc[1]
             cell_errs[(row, col)].append(err)
         else:
             # Model-level errors are not specific to a cell

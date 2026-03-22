@@ -90,9 +90,9 @@ def main(argv: list[str] | None = None) -> None:
         print_factory_list()
         sys.exit(0)
 
-    factory: BaseDataModelFactory = get_factory(args.factory)
+    factory_cls: type[BaseDataModelFactory[Any]] = get_factory(args.factory)
 
-    df: DataFrame = factory.batch_dataframe(args.num_rows)
+    df: DataFrame = factory_cls.batch_dataframe(args.num_rows)
 
     # TODO: this replace option was a quick last-minute addition since fake
     # data generation is very rudimentary. Improve & remove this?

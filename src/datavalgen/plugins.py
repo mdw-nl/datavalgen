@@ -2,14 +2,14 @@ from __future__ import annotations
 import warnings
 
 from importlib.metadata import EntryPoints, entry_points
-from typing import Iterator, TypeVar, Type
+from typing import Any, Iterator, TypeVar, cast
 
 from pydantic import BaseModel
 
 from datavalgen.factory import BaseDataModelFactory
 
 # just for static type checking
-TPlugin = TypeVar("TPlugin", bound=type)
+TPluginClass = TypeVar("TPluginClass", bound=type[object])
 
 
 def _load_entry_point(group: str, name: str) -> object:
@@ -58,8 +58,8 @@ def _normalize_url_label(label: str) -> str:
 
 def _iter_plugins(
     group: str,
-    base_type: Type[TPlugin],
-) -> Iterator[tuple[str, Type[TPlugin], str, str]]:
+    base_type: TPluginClass,
+) -> Iterator[tuple[str, TPluginClass, str, str]]:
     """
     Generic plugin iterator.
 
@@ -102,14 +102,14 @@ def _iter_plugins(
                 if hp:
                     homepage = hp.strip()
 
-        yield ep.name, obj, dist_name, homepage
+        yield ep.name, cast(TPluginClass, obj), dist_name, homepage
 
 
 def _get_plugin(
     group: str,
     name: str,
-    base_type: Type[TPlugin],
-) -> Type[TPlugin]:
+    base_type: TPluginClass,
+) -> TPluginClass:
     """
     Generic resolver for a single plugin in `group` with the given `name`.
 
@@ -124,10 +124,10 @@ def _get_plugin(
             f"(got {obj!r})"
         )
 
-    return obj
+    return cast(TPluginClass, obj)
 
 
-def iter_models() -> Iterator[tuple[str, Type[BaseModel], str, str]]:
+def iter_models() -> Iterator[tuple[str, type[BaseModel], str, str]]:
     """
     Yield (name, model_class, dist_name, homepage_url) for all registered
     datavalgen models.
@@ -138,7 +138,9 @@ def iter_models() -> Iterator[tuple[str, Type[BaseModel], str, str]]:
     return _iter_plugins("datavalgen.models", BaseModel)
 
 
-def iter_factories() -> Iterator[tuple[str, Type[BaseDataModelFactory], str, str]]:
+def iter_factories() -> Iterator[
+    tuple[str, type[BaseDataModelFactory[Any]], str, str]
+]:
     """
     Yield (name, factory_class, dist_name, homepage_url) for all registered
     datavalgen factories.
@@ -149,7 +151,7 @@ def iter_factories() -> Iterator[tuple[str, Type[BaseDataModelFactory], str, str
     return _iter_plugins("datavalgen.factories", BaseDataModelFactory)
 
 
-def get_model(name: str) -> Type[BaseModel]:
+def get_model(name: str) -> type[BaseModel]:
     """
     Resolve a single model by symbolic name (e.g. "example", "diabetes").
     """
@@ -160,7 +162,7 @@ def get_model(name: str) -> Type[BaseModel]:
     )
 
 
-def get_factory(name: str) -> Type[BaseDataModelFactory]:
+def get_factory(name: str) -> type[BaseDataModelFactory[Any]]:
     """
     Resolve a single factory by symbolic name (e.g. "example", "diabetes").
     """
