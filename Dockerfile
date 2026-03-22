@@ -16,6 +16,7 @@ RUN mkdir -p /data \
 WORKDIR /data
 
 COPY ./pyproject.toml /app/datavalgen/pyproject.toml
+COPY ./README.md ./LICENSE /app/datavalgen/
 COPY ./src /app/datavalgen/src
 
 RUN pip install --no-cache-dir /app/datavalgen
