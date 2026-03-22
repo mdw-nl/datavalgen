@@ -14,10 +14,14 @@ dependencies = [
     "pandas==2.3.3",
     "pydantic==2.12.5",
     "polyfactory==3.1.0",
+    "run_context_py @ https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.1.tar.gz",
 ]
 
 [project.scripts]
 datavalgen = "datavalgen.__main__:main"
+
+[project.entry-points."run_context"]
+safe_validate = "datavalgen.safe_validate_run_context:safe_validate_entrypoint"
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

@@ -89,6 +89,42 @@ their data. `datavalgen validate`
 
 The same docker image can be used for a vantage6 "task".
 
+### Run-context behavior
+
+If `RUN_CONTEXT_FILE` is set, `datavalgen` ignores CLI subcommands/flags and
+dispatches only via run-context `entrypoint.name`.
+
+Run-context runtime helpers (`RunContext`, `@run_context`, `dispatch`) are
+provided by the standalone `run-context-py` package.
+The run-context target `safe_validate` is exposed via Python entry points under
+group `"run_context"`.
+
+Currently implemented entrypoint:
+
+* `safe_validate`
+
+`safe_validate` receives:
+
+* exactly one input URI
+* exactly one output URI
+* named arg from run-context (`pydantic_model_name`)
+
+Output written to output URI:
+
+* `{"num_errors": N}` (json output is always on for run-context dispatch)
+
+Decorators available in `run_context`:
+
+* `@run_context(input_uris="<arg_name>", named_arguments="<arg_name>|[...]", output_uris="<arg_name>")`
+
+`RunContext` object is also available in `run_context`, preserving
+raw file sections (`entrypoint`, `arguments`, `inputs`, `outputs`) and exposing
+helper accessors (`entrypoint_name()`, `named_args()`, `input_uris()`,
+`output_uris()`).
+
+Run-context loading is lightweight and validates fields when they are used by
+helpers/dispatch.
+
 
 ### Example usage
 
