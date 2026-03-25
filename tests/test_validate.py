@@ -3,7 +3,8 @@ from datetime import date
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from datavalgen.validate import validate_column_names, validate_dataframe
+from datavalgen.check_result import CheckResult
+from datavalgen.validate import check_column_names, check_dataframe
 
 
 class SimpleModel(BaseModel):
@@ -12,43 +13,76 @@ class SimpleModel(BaseModel):
     birthday: date
 
 
-def test_validate_column_names_ok():
+def test_check_column_names_ok():
     df = pd.DataFrame(columns=["id", "age", "birthday"])
-    errors = validate_column_names(df, SimpleModel)
-    assert errors == []
+    result = check_column_names(df, SimpleModel)
+    assert result.errors == ()
+    assert result.ok is True
 
 
-def test_validate_column_names_mismatch():
+def test_check_column_names_mismatch():
     df = pd.DataFrame(columns=["id", "wrong"])
-    errors = validate_column_names(df, SimpleModel)
+    result = check_column_names(df, SimpleModel)
 
     # Two lines: missing + unexpected
-    assert len(errors) == 2
-    assert "Missing expected columns" in errors[0]
-    assert "'age'" in errors[0]
-    assert "'birthday'" in errors[0]
-    assert "Unexpected columns" in errors[1]
-    assert "'wrong'" in errors[1]
+    assert len(result.errors) == 2
+    assert "Missing expected columns" in result.errors[0]
+    assert "'age'" in result.errors[0]
+    assert "'birthday'" in result.errors[0]
+    assert "Unexpected columns" in result.errors[1]
+    assert "'wrong'" in result.errors[1]
 
 
-def test_validate_dataframe_ok_count_only():
+def test_check_dataframe_ok_count_only():
     df = pd.DataFrame([{"id": 1, "age": 30, "birthday": "1990-01-01"}])
-    count = validate_dataframe(df, SimpleModel)
-    assert count == []
+    result = check_dataframe(df, SimpleModel)
+    assert result.errors == ()
+    assert result.ok is True
 
 
-def test_validate_dataframe_errors():
+def test_check_dataframe_errors():
     df = pd.DataFrame(
         [
             {"id": -1, "age": 200, "birthday": "not-a-date"},
         ]
     )
 
-    errors = validate_dataframe(df, SimpleModel)
+    result = check_dataframe(df, SimpleModel)
 
     # check return type
-    assert isinstance(errors, list)
+    assert isinstance(result, CheckResult)
     # shouln't be empty
-    assert errors
+    assert result.errors
     # we expect 3 errors: one per field
-    assert len(errors) == 3
+    assert len(result.errors) == 3
+
+
+def test_check_result_ok_property():
+    assert CheckResult[str]().ok is True
+    assert CheckResult[str](warnings=("warning",)).ok is True
+    assert CheckResult[str](errors=("error",)).ok is False
+
+
+def test_check_column_names_returns_common_shape():
+    df = pd.DataFrame(columns=["id", "wrong"])
+    result = check_column_names(df, SimpleModel)
+
+    assert isinstance(result, CheckResult)
+    assert result.ok is False
+    assert result.warnings == ()
+    assert len(result.errors) == 2
+
+
+def test_check_dataframe_returns_common_shape():
+    df = pd.DataFrame(
+        [
+            {"id": -1, "age": 200, "birthday": "not-a-date"},
+        ]
+    )
+
+    result = check_dataframe(df, SimpleModel)
+
+    assert isinstance(result, CheckResult)
+    assert result.ok is False
+    assert result.warnings == ()
+    assert len(result.errors) == 3

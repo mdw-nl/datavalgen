@@ -1,6 +1,6 @@
 import pandas as pd
 from datavalgen.report_errors import format_val_errors
-from datavalgen.validate import validate_dataframe
+from datavalgen.validate import check_dataframe
 from .test_validate import SimpleModel
 
 
@@ -13,7 +13,7 @@ def test_validate_format_errors():
         ]
     )
 
-    errors = validate_dataframe(df, SimpleModel)
+    errors = list(check_dataframe(df, SimpleModel).errors)
 
     text = format_val_errors(errors, max_errors=10)
 
@@ -27,4 +27,3 @@ def test_validate_format_errors():
     assert errors_lines[3] == "   Got: '200'."
     assert errors_lines[4] == "❌ Line 2, column 'birthday': Input should be a valid date or datetime, invalid character in year."
     assert errors_lines[5] == "   Got: 'not-a-date'."
-

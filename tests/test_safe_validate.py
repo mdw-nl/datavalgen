@@ -4,18 +4,19 @@ import importlib
 import pandas as pd
 import pytest
 
-from datavalgen.safe_validate import safe_validate, safe_validate_dataframe
+from datavalgen.safe_validate import safe_validate
+from datavalgen.validate import check_dataframe
 from .test_validate import SimpleModel
 
 
-def test_safe_validate_dataframe():
+def test_check_dataframe_error_count():
     df = pd.DataFrame(
         [
             {"id": -1, "age": 200, "birthday": "not-a-date"},
         ]
     )
 
-    error_count = safe_validate_dataframe(df, SimpleModel)
+    error_count = len(check_dataframe(df, SimpleModel).errors)
 
     # check return type
     assert isinstance(error_count, int)
@@ -23,7 +24,7 @@ def test_safe_validate_dataframe():
     assert error_count == 3
 
 
-def test_safe_validate_dataframe_multiple():
+def test_check_dataframe_error_count_multiple():
     df = pd.DataFrame(
         [
             {"id": -1, "age": 200, "birthday": "not-a-date"},
@@ -31,7 +32,7 @@ def test_safe_validate_dataframe_multiple():
         ]
     )
 
-    error_count = safe_validate_dataframe(df, SimpleModel)
+    error_count = len(check_dataframe(df, SimpleModel).errors)
 
     # check return type
     assert isinstance(error_count, int)
@@ -39,7 +40,7 @@ def test_safe_validate_dataframe_multiple():
     assert error_count == 3
 
 
-def test_safe_validate_dataframe_valid():
+def test_check_dataframe_error_count_valid():
     df = pd.DataFrame(
         [
             {"id": 1, "age": 20, "birthday": "1990-01-01"},
@@ -48,7 +49,7 @@ def test_safe_validate_dataframe_valid():
         ]
     )
 
-    error_count = safe_validate_dataframe(df, SimpleModel)
+    error_count = len(check_dataframe(df, SimpleModel).errors)
 
     # check return type
     assert isinstance(error_count, int)
