@@ -1,9 +1,10 @@
+from .check_result import CheckResult
 from .read_csv import read_csv_raw
-from .safe_validate import safe_validate_dataframe
-from .validate import validate_dataframe
+from .validate import check_column_names, check_dataframe
 
 __all__ = [
-    "validate_dataframe",
-    "safe_validate_dataframe",
+    "CheckResult",
+    "check_column_names",
+    "check_dataframe",
     "read_csv_raw",
 ]

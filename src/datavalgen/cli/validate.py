@@ -4,7 +4,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 from datavalgen.cli.utils.print import print_model_list
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ from datavalgen.plugins import get_model
 
 from datavalgen.read_csv import read_csv_raw
 from datavalgen.report_errors import format_val_errors
-from datavalgen.validate import validate_column_names, validate_dataframe
+from datavalgen.validate import check_column_names, check_dataframe
 
 
 from pandas import DataFrame
@@ -95,20 +95,20 @@ def main(argv: list[str] | None = None) -> None:
 
     df: DataFrame = read_csv_raw(args.data)
 
-    errors: List[str] = validate_column_names(df, model)
-    if errors:
+    column_check = check_column_names(df, model)
+    if column_check.errors:
         print(
             "❌ Column names do not match the schema. Stopping any further validation."
         )
-        print("\n".join(errors))
+        print("\n".join(column_check.errors))
         sys.exit(1)
 
-    errors = validate_dataframe(df, model)
-    print(format_val_errors(errors, args.max_errors))
+    dataframe_check = check_dataframe(df, model)
+    print(format_val_errors(list(dataframe_check.errors), args.max_errors))
 
-    if errors:
+    if dataframe_check.errors:
         print(
             f'⚠️  Note: errors above contain your actual data values ("Got: .."). Do not share.'
         )
 
-    sys.exit(1 if errors else 0)
+    sys.exit(1 if dataframe_check.errors else 0)
