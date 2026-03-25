@@ -42,7 +42,7 @@ def docker_detect_missing_volume(out_path) -> bool:
 # Problem: writing to /data/data.csv from within the container will mean
 # root:root file. If `docker run` was run by a user, we will annoy them.
 # So we fix the output file permissions to match /data dir.
-def docker_fix_permissions(out_path: Path) -> None:
+def docker_fix_permissions(out_path: Path) -> bool:
     """
     If running in docker and writing to /data, fix permissions of the output file
     to match the data directory.

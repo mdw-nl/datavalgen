@@ -1,6 +1,7 @@
 import pandas as pd
 from pydantic import BaseModel, TypeAdapter
 from pydantic_core import ErrorDetails, ValidationError
+from typing import cast
 
 from datavalgen.check_result import CheckResult
 
@@ -14,7 +15,8 @@ def select_model_columns(
     This lets callers validate a selected model against a wider CSV while
     ignoring unrelated extra columns.
     """
-    return df[list(model.model_fields.keys())]
+    columns: list[str] = list(model.model_fields.keys())
+    return cast(pd.DataFrame, df[columns])
 
 
 def check_dataframe(
