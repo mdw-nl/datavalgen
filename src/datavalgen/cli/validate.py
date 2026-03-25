@@ -103,6 +103,10 @@ def main(argv: list[str] | None = None) -> None:
         print("\n".join(column_check.errors))
         sys.exit(1)
 
+    if column_check.warnings:
+        print("⚠️  Ignoring extra columns not used by the selected model:")
+        print("\n".join(column_check.warnings))
+
     dataframe_check = check_dataframe(df, model)
     print(format_val_errors(list(dataframe_check.errors), args.max_errors))
 

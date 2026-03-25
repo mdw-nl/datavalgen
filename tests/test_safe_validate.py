@@ -78,6 +78,23 @@ def test_safe_validate_writes_json_count(tmp_path, monkeypatch):
     assert payload == {"num_errors": 3}
 
 
+def test_safe_validate_ignores_extra_columns(tmp_path, monkeypatch):
+    csv_path = tmp_path / "data.csv"
+    out_path = tmp_path / "out.json"
+    _write_text(csv_path, "id,age,birthday,extra\n-1,200,not-a-date,ignored\n")
+
+    safe_validate_module = importlib.import_module("datavalgen.safe_validate")
+    monkeypatch.setattr(safe_validate_module, "get_model", lambda _: SimpleModel)
+    safe_validate(
+        dataset_path=csv_path,
+        output_path=out_path,
+        pydantic_model_name="simple",
+    )
+
+    payload = json.loads(out_path.read_text(encoding="utf-8"))
+    assert payload == {"num_errors": 3}
+
+
 def test_safe_validate_uses_datavalgen_model_env_fallback(tmp_path, monkeypatch):
     csv_path = tmp_path / "data.csv"
     out_path = tmp_path / "out.json"
