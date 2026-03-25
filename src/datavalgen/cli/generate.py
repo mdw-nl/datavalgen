@@ -4,7 +4,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from datavalgen.cli.utils.print import print_factory_list
 from datavalgen.factory import BaseDataModelFactory
@@ -114,11 +114,11 @@ def main(argv: list[str] | None = None) -> None:
 
     # optional column filter
     if args.columns:
-        cols: list[Any] = [c.strip() for c in args.columns.split(",")]
-        missing: set[Any] = set(cols) - set(df.columns)
+        cols: list[str] = [c.strip() for c in args.columns.split(",")]
+        missing: set[str] = set(cols) - set(df.columns)
         if missing:
             sys.exit(f"Columns not in model: {', '.join(missing)}")
-        df = df[cols]
+        df = cast(DataFrame, df[cols])
 
     if args.show_df:
         print(df)

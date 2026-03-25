@@ -91,7 +91,7 @@ def main(argv: list[str] | None = None) -> None:
         print_model_list()
         sys.exit(0)
 
-    model: BaseModel = get_model(args.model)
+    model: type[BaseModel] = get_model(args.model)
 
     df: DataFrame = read_csv_raw(args.data)
 
