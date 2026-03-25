@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "datavalgen"
-version = "0.2.2"
+version = "0.3.0rc1"
 description = "Tiny tool with the aim of providing a common way to validate (and generate) simple data."
 readme = "README.md"
 license = "MIT"
