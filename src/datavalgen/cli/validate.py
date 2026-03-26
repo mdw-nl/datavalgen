@@ -86,12 +86,13 @@ def parse_args(argv) -> Any:
 def main(argv: list[str] | None = None) -> None:
     """Entry-point for `datavalgen validate ...`."""
     args = parse_args(argv)
+    distribution = os.environ.get("DATAVALGEN_DISTRIBUTION")
 
     if args.list:
         print_model_list()
         sys.exit(0)
 
-    model: type[BaseModel] = get_model(args.model)
+    model: type[BaseModel] = get_model(args.model, distribution=distribution)
 
     df: DataFrame = read_csv_raw(args.data)
 

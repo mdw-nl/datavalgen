@@ -1,3 +1,4 @@
+import os
 from typing import Iterable, Tuple
 
 from datavalgen.plugins import iter_models, iter_factories
@@ -34,11 +35,13 @@ def print_factory_list() -> None:
     """
     Prints a table of registered datavalgen factories.
     """
-    _print_plugin_list("factory", iter_factories())
+    distribution = os.environ.get("DATAVALGEN_DISTRIBUTION")
+    _print_plugin_list("factory", iter_factories(distribution=distribution))
 
 
 def print_model_list() -> None:
     """
     Prints a table of registered datavalgen models.
     """
-    _print_plugin_list("model", iter_models())
+    distribution = os.environ.get("DATAVALGEN_DISTRIBUTION")
+    _print_plugin_list("model", iter_models(distribution=distribution))

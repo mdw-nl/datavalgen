@@ -65,9 +65,14 @@ def test_safe_validate_writes_json_count(tmp_path, monkeypatch):
     csv_path = tmp_path / "data.csv"
     out_path = tmp_path / "out.json"
     _write_text(csv_path, "id,age,birthday\n-1,200,not-a-date\n")
+    monkeypatch.setenv("DATAVALGEN_DISTRIBUTION", "example-dist")
 
     safe_validate_module = importlib.import_module("datavalgen.safe_validate")
-    monkeypatch.setattr(safe_validate_module, "get_model", lambda _: SimpleModel)
+    monkeypatch.setattr(
+        safe_validate_module,
+        "get_model",
+        lambda _, distribution=None: SimpleModel,
+    )
     safe_validate(
         dataset_path=csv_path,
         output_path=out_path,
@@ -82,9 +87,14 @@ def test_safe_validate_ignores_extra_columns(tmp_path, monkeypatch):
     csv_path = tmp_path / "data.csv"
     out_path = tmp_path / "out.json"
     _write_text(csv_path, "id,age,birthday,extra\n-1,200,not-a-date,ignored\n")
+    monkeypatch.setenv("DATAVALGEN_DISTRIBUTION", "example-dist")
 
     safe_validate_module = importlib.import_module("datavalgen.safe_validate")
-    monkeypatch.setattr(safe_validate_module, "get_model", lambda _: SimpleModel)
+    monkeypatch.setattr(
+        safe_validate_module,
+        "get_model",
+        lambda _, distribution=None: SimpleModel,
+    )
     safe_validate(
         dataset_path=csv_path,
         output_path=out_path,
@@ -101,8 +111,13 @@ def test_safe_validate_uses_datavalgen_model_env_fallback(tmp_path, monkeypatch)
     _write_text(csv_path, "id,age,birthday\n-1,200,not-a-date\n")
 
     monkeypatch.setenv("DATAVALGEN_MODEL", "simple")
+    monkeypatch.setenv("DATAVALGEN_DISTRIBUTION", "example-dist")
     safe_validate_module = importlib.import_module("datavalgen.safe_validate")
-    monkeypatch.setattr(safe_validate_module, "get_model", lambda _: SimpleModel)
+    monkeypatch.setattr(
+        safe_validate_module,
+        "get_model",
+        lambda _, distribution=None: SimpleModel,
+    )
     safe_validate(
         dataset_path=csv_path,
         output_path=out_path,
@@ -119,6 +134,7 @@ def test_safe_validate_errors_without_named_or_env_model(tmp_path, monkeypatch):
     _write_text(csv_path, "id,age,birthday\n-1,200,not-a-date\n")
 
     monkeypatch.delenv("DATAVALGEN_MODEL", raising=False)
+    monkeypatch.setenv("DATAVALGEN_DISTRIBUTION", "example-dist")
 
     with pytest.raises(
         ValueError,
@@ -128,4 +144,22 @@ def test_safe_validate_errors_without_named_or_env_model(tmp_path, monkeypatch):
             dataset_path=csv_path,
             output_path=out_path,
             pydantic_model_name=None,
+        )
+
+
+def test_safe_validate_errors_without_distribution_env(tmp_path, monkeypatch):
+    csv_path = tmp_path / "data.csv"
+    out_path = tmp_path / "out.json"
+    _write_text(csv_path, "id,age,birthday\n-1,200,not-a-date\n")
+
+    monkeypatch.delenv("DATAVALGEN_DISTRIBUTION", raising=False)
+
+    with pytest.raises(
+        ValueError,
+        match="DATAVALGEN_DISTRIBUTION must be set for safe_validate",
+    ):
+        safe_validate(
+            dataset_path=csv_path,
+            output_path=out_path,
+            pydantic_model_name="simple",
         )

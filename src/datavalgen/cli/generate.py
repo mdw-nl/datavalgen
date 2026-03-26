@@ -85,12 +85,16 @@ def parse_args(argv) -> Any:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    distribution = os.environ.get("DATAVALGEN_DISTRIBUTION")
 
     if args.list:
         print_factory_list()
         sys.exit(0)
 
-    factory_cls: type[BaseDataModelFactory[Any]] = get_factory(args.factory)
+    factory_cls: type[BaseDataModelFactory[Any]] = get_factory(
+        args.factory,
+        distribution=distribution,
+    )
 
     df: DataFrame = factory_cls.batch_dataframe(args.num_rows)
 

@@ -35,7 +35,15 @@ def safe_validate(
             "pydantic_model_name was not provided and DATAVALGEN_MODEL is not set"
         )
 
-    model = get_model(model_name)
+    # In privacy-sensitive FL use, we may let the caller choose among multiple
+    # models, but only from the distribution the image author explicitly trusts.
+    distribution = os.environ.get("DATAVALGEN_DISTRIBUTION")
+    if not distribution:
+        raise ValueError(
+            "DATAVALGEN_DISTRIBUTION must be set for safe_validate so model "
+            "lookup is restricted to one trusted distribution"
+        )
+    model = get_model(model_name, distribution=distribution)
     df = read_csv_raw(dataset_path)
 
     column_check = check_column_names(df, model)
