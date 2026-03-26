@@ -1,7 +1,8 @@
 from __future__ import annotations
+import re
 import warnings
 
-from importlib.metadata import EntryPoints, entry_points
+from importlib.metadata import EntryPoint, EntryPoints, entry_points
 from typing import Any, Iterator, TypeVar, cast
 
 from pydantic import BaseModel
@@ -12,12 +13,30 @@ from datavalgen.factory import BaseDataModelFactory
 TPluginClass = TypeVar("TPluginClass", bound=type[object])
 
 
-def _load_entry_point(group: str, name: str) -> object:
+def _normalize_distribution_name(name: str) -> str:
     """
-    Load a single entry point from a given group by name.
+    Normalize a distribution name following the common PEP 503 form.
+    """
+    return re.sub(r"[-_.]+", "-", name).lower()
 
-    `group` is something like "datavalgen.models" or "datavalgen.factories".
-    `name` is the symbolic name ("example", "diabetes", ...).
+
+def _entry_point_distribution_name(ep: EntryPoint) -> str:
+    """
+    Return the entry point's distribution name, or an empty string if unknown.
+    """
+    dist = getattr(ep, "dist", None)
+    if dist is None:
+        return ""
+    meta = dist.metadata
+    return (meta.get("Name") or dist.name or "").strip()
+
+
+def _group_entry_points(
+    group: str,
+    distribution: str | None = None,
+) -> list[EntryPoint]:
+    """
+    Return entry points in a group, optionally restricted to one distribution.
     """
     try:
         eps: EntryPoints = entry_points(group=group)
@@ -25,11 +44,37 @@ def _load_entry_point(group: str, name: str) -> object:
         # Older style, above is Python 3.10+
         eps = entry_points().select(group=group)
 
+    if distribution is None:
+        return list(eps)
+
+    wanted = _normalize_distribution_name(distribution)
+    return [
+        ep
+        for ep in eps
+        if _normalize_distribution_name(_entry_point_distribution_name(ep)) == wanted
+    ]
+
+
+def _load_entry_point(
+    group: str,
+    name: str,
+    distribution: str | None = None,
+) -> object:
+    """
+    Load a single entry point from a given group by name.
+
+    `group` is something like "datavalgen.models" or "datavalgen.factories".
+    `name` is the symbolic name ("example", "diabetes", ...).
+    """
+    eps = _group_entry_points(group, distribution)
     matches = [ep for ep in eps if ep.name == name]
     if not matches:
         available = ", ".join(sorted(ep.name for ep in eps)) or "<none>"
+        distribution_label = (
+            f" in distribution {distribution!r}" if distribution is not None else ""
+        )
         raise LookupError(
-            f"Unknown entry-point {name!r} in group {group!r}.\n"
+            f"Unknown entry-point {name!r} in group {group!r}{distribution_label}.\n"
             f"Available {group!r} entry-point: {available}"
         )
 
@@ -59,6 +104,7 @@ def _normalize_url_label(label: str) -> str:
 def _iter_plugins(
     group: str,
     base_type: TPluginClass,
+    distribution: str | None = None,
 ) -> Iterator[tuple[str, TPluginClass, str, str]]:
     """
     Generic plugin iterator.
@@ -66,11 +112,7 @@ def _iter_plugins(
     Yields (name, cls, dist_name, homepage_url) for all entry points in `group`
     whose loaded object is a subclass of `base_type`.
     """
-    try:
-        eps = entry_points(group=group)
-    except TypeError:
-        eps = entry_points().select(group=group)  # older style
-
+    eps = _group_entry_points(group, distribution)
     for ep in eps:
         obj = ep.load()
         # Only keep proper classes that subclass the expected base_type
@@ -109,13 +151,14 @@ def _get_plugin(
     group: str,
     name: str,
     base_type: TPluginClass,
+    distribution: str | None = None,
 ) -> TPluginClass:
     """
     Generic resolver for a single plugin in `group` with the given `name`.
 
     Ensures the loaded object is a subclass of `base_type`.
     """
-    obj = _load_entry_point(group, name)
+    obj = _load_entry_point(group, name, distribution)
 
     if not isinstance(obj, type) or not issubclass(obj, base_type):
         typename = getattr(base_type, "__name__", repr(base_type))
@@ -127,7 +170,9 @@ def _get_plugin(
     return cast(TPluginClass, obj)
 
 
-def iter_models() -> Iterator[tuple[str, type[BaseModel], str, str]]:
+def iter_models(
+    distribution: str | None = None,
+) -> Iterator[tuple[str, type[BaseModel], str, str]]:
     """
     Yield (name, model_class, dist_name, homepage_url) for all registered
     datavalgen models.
@@ -135,10 +180,12 @@ def iter_models() -> Iterator[tuple[str, type[BaseModel], str, str]]:
     Models are registered under the entry point group "datavalgen.models".
     `homepage_url` may be "" if none is found.
     """
-    return _iter_plugins("datavalgen.models", BaseModel)
+    return _iter_plugins("datavalgen.models", BaseModel, distribution)
 
 
-def iter_factories() -> Iterator[
+def iter_factories(
+    distribution: str | None = None,
+) -> Iterator[
     tuple[str, type[BaseDataModelFactory[Any]], str, str]
 ]:
     """
@@ -148,10 +195,13 @@ def iter_factories() -> Iterator[
     Factories are registered under the entry point group "datavalgen.factories".
     `homepage_url` may be "" if none is found.
     """
-    return _iter_plugins("datavalgen.factories", BaseDataModelFactory)
+    return _iter_plugins("datavalgen.factories", BaseDataModelFactory, distribution)
 
 
-def get_model(name: str) -> type[BaseModel]:
+def get_model(
+    name: str,
+    distribution: str | None = None,
+) -> type[BaseModel]:
     """
     Resolve a single model by symbolic name (e.g. "example", "diabetes").
     """
@@ -159,10 +209,14 @@ def get_model(name: str) -> type[BaseModel]:
         "datavalgen.models",
         name,
         BaseModel,
+        distribution,
     )
 
 
-def get_factory(name: str) -> type[BaseDataModelFactory[Any]]:
+def get_factory(
+    name: str,
+    distribution: str | None = None,
+) -> type[BaseDataModelFactory[Any]]:
     """
     Resolve a single factory by symbolic name (e.g. "example", "diabetes").
     """
@@ -170,4 +224,5 @@ def get_factory(name: str) -> type[BaseDataModelFactory[Any]]:
         "datavalgen.factories",
         name,
         BaseDataModelFactory,
+        distribution,
     )
