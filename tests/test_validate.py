@@ -1,10 +1,9 @@
 from datetime import date
 
-import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from datavalgen.check_result import CheckResult
-from datavalgen.validate import check_column_names, check_dataframe, select_model_columns
+from datavalgen.validate import check_column_names, check_csv_file
 
 
 class SimpleModel(BaseModel):
@@ -18,17 +17,17 @@ class StrictSimpleModel(SimpleModel):
 
 
 def test_check_column_names_ok():
-    df = pd.DataFrame(columns=["id", "age", "birthday"])
-    result = check_column_names(df, SimpleModel)
+    result = check_column_names(("id", "age", "birthday"), SimpleModel)
     assert result.errors == ()
     assert result.warnings == ()
     assert result.ok is True
 
 
 def test_check_column_names_missing_and_extra():
-    df = pd.DataFrame(columns=["id", "wrong"])
-    result = check_column_names(df, SimpleModel)
+    result = check_column_names(("id", "wrong"), SimpleModel)
 
+    assert isinstance(result, CheckResult)
+    assert result.ok is False
     assert len(result.errors) == 1
     assert "Missing expected columns" in result.errors[0]
     assert "'age'" in result.errors[0]
@@ -39,72 +38,12 @@ def test_check_column_names_missing_and_extra():
 
 
 def test_check_column_names_extra_only_is_warning():
-    df = pd.DataFrame(columns=["id", "age", "birthday", "extra"])
-    result = check_column_names(df, SimpleModel)
+    result = check_column_names(("id", "age", "birthday", "extra"), SimpleModel)
 
     assert result.errors == ()
     assert len(result.warnings) == 1
     assert "Unexpected columns" in result.warnings[0]
     assert "'extra'" in result.warnings[0]
-    assert result.ok is True
-
-
-def test_check_dataframe_ok_count_only():
-    df = pd.DataFrame([{"id": 1, "age": 30, "birthday": "1990-01-01"}])
-    result = check_dataframe(df, SimpleModel)
-    assert result.errors == ()
-    assert result.ok is True
-
-
-def test_check_dataframe_errors():
-    df = pd.DataFrame(
-        [
-            {"id": -1, "age": 200, "birthday": "not-a-date"},
-        ]
-    )
-
-    result = check_dataframe(df, SimpleModel)
-
-    # check return type
-    assert isinstance(result, CheckResult)
-    # shouln't be empty
-    assert result.errors
-    # we expect 3 errors: one per field
-    assert len(result.errors) == 3
-
-
-def test_select_model_columns_drops_extra_columns():
-    df = pd.DataFrame(
-        [
-            {
-                "id": 1,
-                "age": 30,
-                "birthday": "1990-01-01",
-                "extra": "ignored",
-            }
-        ]
-    )
-
-    selected = select_model_columns(df, SimpleModel)
-
-    assert list(selected.columns) == ["id", "age", "birthday"]
-
-
-def test_check_dataframe_ignores_extra_columns_for_strict_models():
-    df = pd.DataFrame(
-        [
-            {
-                "id": 1,
-                "age": 30,
-                "birthday": "1990-01-01",
-                "extra": "ignored",
-            }
-        ]
-    )
-
-    result = check_dataframe(df, StrictSimpleModel)
-
-    assert result.errors == ()
     assert result.ok is True
 
 
@@ -114,26 +53,80 @@ def test_check_result_ok_property():
     assert CheckResult[str](errors=("error",)).ok is False
 
 
-def test_check_column_names_returns_common_shape():
-    df = pd.DataFrame(columns=["id", "wrong"])
-    result = check_column_names(df, SimpleModel)
-
-    assert isinstance(result, CheckResult)
-    assert result.ok is False
-    assert len(result.errors) == 1
-    assert len(result.warnings) == 1
-
-
-def test_check_dataframe_returns_common_shape():
-    df = pd.DataFrame(
-        [
-            {"id": -1, "age": 200, "birthday": "not-a-date"},
-        ]
+def test_check_csv_file_ok(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "id,age,birthday\n1,30,1990-01-01\n2,20,1991-02-03\n",
+        encoding="utf-8",
     )
 
-    result = check_dataframe(df, SimpleModel)
+    result = check_csv_file(csv_path, SimpleModel)
 
-    assert isinstance(result, CheckResult)
-    assert result.ok is False
+    assert result.ok is True
+    assert result.num_errors == 0
+    assert result.errors == ()
     assert result.warnings == ()
+
+
+def test_check_csv_file_errors(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "id,age,birthday\n-1,200,not-a-date\n",
+        encoding="utf-8",
+    )
+
+    result = check_csv_file(csv_path, SimpleModel)
+
+    assert result.ok is False
+    assert result.num_errors == 3
     assert len(result.errors) == 3
+
+
+def test_check_csv_file_ignores_extra_columns_for_strict_models(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "id,age,birthday,extra\n1,30,1990-01-01,ignored\n",
+        encoding="utf-8",
+    )
+
+    result = check_csv_file(csv_path, StrictSimpleModel)
+
+    assert result.ok is True
+    assert result.num_errors == 0
+    assert len(result.warnings) == 1
+    assert "Unexpected columns" in result.warnings[0]
+
+
+def test_check_csv_file_preserves_global_line_numbers_across_chunks(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "id,age,birthday\n1,20,1990-01-01\n2,21,1990-01-02\n-1,200,not-a-date\n",
+        encoding="utf-8",
+    )
+
+    result = check_csv_file(csv_path, SimpleModel, chunk_size=2)
+
+    assert result.ok is False
+    assert result.num_errors == 3
+    assert len(result.errors) == 3
+    assert result.errors[0]["loc"] == (2, "id")
+    assert result.errors[1]["loc"] == (2, "age")
+    assert result.errors[2]["loc"] == (2, "birthday")
+
+
+def test_check_csv_file_truncates_displayed_errors_but_counts_all_errors(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "id,age,birthday\n"
+        "-1,200,not-a-date\n"
+        "-2,201,still-not-a-date\n",
+        encoding="utf-8",
+    )
+
+    result = check_csv_file(csv_path, SimpleModel, chunk_size=1, max_errors=1)
+
+    assert result.ok is False
+    assert result.num_errors == 6
+    assert result.truncated is True
+    assert len(result.errors) == 1
+    assert result.errors[0]["loc"] == (0, "id")

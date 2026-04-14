@@ -11,8 +11,7 @@ from pathlib import Path
 from run_context import run_context
 
 from datavalgen.plugins import get_model
-from datavalgen.read_csv import read_csv_raw
-from datavalgen.validate import check_column_names, check_dataframe
+from datavalgen.validate import check_csv_file
 
 
 @run_context(
@@ -44,13 +43,8 @@ def safe_validate(
             "lookup is restricted to one trusted distribution"
         )
     model = get_model(model_name, distribution=distribution)
-    df = read_csv_raw(dataset_path)
-
-    column_check = check_column_names(df, model)
-    if column_check.errors:
-        num_errors = len(column_check.errors)
-    else:
-        num_errors = len(check_dataframe(df, model).errors)
+    validation = check_csv_file(dataset_path, model, max_errors=0)
+    num_errors = validation.num_errors
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if json_out:

@@ -10,12 +10,9 @@ from datavalgen.cli.utils.print import print_model_list
 from pydantic import BaseModel
 from datavalgen.plugins import get_model
 
-from datavalgen.read_csv import read_csv_raw
+from datavalgen.read_csv import read_csv_columns
 from datavalgen.report_errors import format_val_errors
-from datavalgen.validate import check_column_names, check_dataframe
-
-
-from pandas import DataFrame
+from datavalgen.validate import check_column_names, check_csv_file
 
 __all__: list[str] = ["main"]
 
@@ -93,10 +90,7 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(0)
 
     model: type[BaseModel] = get_model(args.model, distribution=distribution)
-
-    df: DataFrame = read_csv_raw(args.data)
-
-    column_check = check_column_names(df, model)
+    column_check = check_column_names(read_csv_columns(args.data), model)
     if column_check.errors:
         print(
             "❌ Column names do not match the schema. Stopping any further validation."
@@ -108,12 +102,18 @@ def main(argv: list[str] | None = None) -> None:
         print("⚠️  Ignoring extra columns not used by the selected model:")
         print("\n".join(column_check.warnings))
 
-    dataframe_check = check_dataframe(df, model)
-    print(format_val_errors(list(dataframe_check.errors), args.max_errors))
+    csv_check = check_csv_file(args.data, model, max_errors=args.max_errors)
+    print(
+        format_val_errors(
+            list(csv_check.errors),
+            args.max_errors,
+            truncated=csv_check.truncated,
+        )
+    )
 
-    if dataframe_check.errors:
+    if csv_check.num_errors:
         print(
             f'⚠️  Note: errors above contain your actual data values ("Got: .."). Do not share.'
         )
 
-    sys.exit(1 if dataframe_check.errors else 0)
+    sys.exit(1 if csv_check.num_errors else 0)
