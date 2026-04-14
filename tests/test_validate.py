@@ -97,6 +97,21 @@ def test_check_csv_file_ignores_extra_columns_for_strict_models(tmp_path):
     assert "Unexpected columns" in result.warnings[0]
 
 
+def test_check_csv_file_uses_column_names_not_csv_order(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    csv_path.write_text(
+        "age,id,birthday\n200,1,1990-01-01\n",
+        encoding="utf-8",
+    )
+
+    result = check_csv_file(csv_path, SimpleModel)
+
+    assert result.ok is False
+    assert result.num_errors == 1
+    assert len(result.errors) == 1
+    assert result.errors[0]["loc"] == (0, "age")
+
+
 def test_check_csv_file_preserves_global_line_numbers_across_chunks(tmp_path):
     csv_path = tmp_path / "data.csv"
     csv_path.write_text(
