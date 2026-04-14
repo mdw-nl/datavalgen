@@ -3,7 +3,12 @@ from collections import defaultdict
 from pydantic_core import ErrorDetails
 
 
-def format_val_errors(errors: list[ErrorDetails], max_errors: int = 10) -> str:
+def format_val_errors(
+    errors: list[ErrorDetails],
+    max_errors: int = 10,
+    *,
+    truncated: bool = False,
+) -> str:
     """
     Format Pydantic v2 validation errors into a compact, human-readable string
     (with new lines).
@@ -24,12 +29,19 @@ def format_val_errors(errors: list[ErrorDetails], max_errors: int = 10) -> str:
         errors: A list of Pydantic `ErrorDetails` dictionaries.
         max_errors: Maximum number of distinct problem *cells* (row, column
             pairs) to print before truncating with a summary line.
+        truncated: Whether the caller already truncated the input error list and
+            therefore only wants a generic truncation note.
 
     Returns:
         str: A human-readable multi-line summary. If `errors` is empty, returns
             "✅ No validatoin errors found."
     """
     if not errors:
+        if truncated:
+            return (
+                f"Validation found errors, but output was truncated because "
+                f"--max-errors is set to {max_errors}."
+            )
         return "✅ No validation errors found."
 
     cell_errs: dict[tuple[int, str], list[ErrorDetails]] = defaultdict(list)
@@ -51,12 +63,18 @@ def format_val_errors(errors: list[ErrorDetails], max_errors: int = 10) -> str:
     lines: list[str] = []
 
     # Pretty-print cell-level problems
-    for (row, col), errs in list(cell_errs.items())[:max_errors]:
+    displayed_cell_errs = list(cell_errs.items())[:max_errors]
+    for (row, col), errs in displayed_cell_errs:
         joined = "\n   Or: ".join(e["msg"] for e in errs)
         lines.append(f"❌ Line {row + 2}, column '{col}': {joined}.")
         lines.append(f"   Got: '{errs[0]['input']}'.")
     if len(cell_errs) > max_errors:
         lines.append(f"... and {len(cell_errs) - max_errors} more problem cells.")
+        lines.append(
+            "   (Use --max-errors N to increase the number of reported cells to N.)"
+        )
+    elif truncated:
+        lines.append(f"... output truncated after the first {max_errors} problem cells.")
         lines.append(
             "   (Use --max-errors N to increase the number of reported cells to N.)"
         )

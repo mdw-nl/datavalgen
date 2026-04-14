@@ -1,59 +1,46 @@
 import json
 import importlib
 
-import pandas as pd
 import pytest
 
 from datavalgen.safe_validate import safe_validate
-from datavalgen.validate import check_dataframe
+from datavalgen.validate import check_csv_file
 from .test_validate import SimpleModel
 
 
-def test_check_dataframe_error_count():
-    df = pd.DataFrame(
-        [
-            {"id": -1, "age": 200, "birthday": "not-a-date"},
-        ]
-    )
+def test_check_csv_file_error_count(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    _write_text(csv_path, "id,age,birthday\n-1,200,not-a-date\n")
 
-    error_count = len(check_dataframe(df, SimpleModel).errors)
+    error_count = check_csv_file(csv_path, SimpleModel).num_errors
 
-    # check return type
     assert isinstance(error_count, int)
-    # we expect 3 errors: one per field
     assert error_count == 3
 
 
-def test_check_dataframe_error_count_multiple():
-    df = pd.DataFrame(
-        [
-            {"id": -1, "age": 200, "birthday": "not-a-date"},
-            {"id": 1, "age": 20, "birthday": "1990-01-01"},
-        ]
+def test_check_csv_file_error_count_multiple(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    _write_text(
+        csv_path,
+        "id,age,birthday\n-1,200,not-a-date\n1,20,1990-01-01\n",
     )
 
-    error_count = len(check_dataframe(df, SimpleModel).errors)
+    error_count = check_csv_file(csv_path, SimpleModel).num_errors
 
-    # check return type
     assert isinstance(error_count, int)
-    # we expect 3 errors: one per field
     assert error_count == 3
 
 
-def test_check_dataframe_error_count_valid():
-    df = pd.DataFrame(
-        [
-            {"id": 1, "age": 20, "birthday": "1990-01-01"},
-            {"id": 3, "age": 21, "birthday": "1990-01-02"},
-            {"id": 6, "age": 22, "birthday": "1990-02-01"},
-        ]
+def test_check_csv_file_error_count_valid(tmp_path):
+    csv_path = tmp_path / "data.csv"
+    _write_text(
+        csv_path,
+        "id,age,birthday\n1,20,1990-01-01\n3,21,1990-01-02\n6,22,1990-02-01\n",
     )
 
-    error_count = len(check_dataframe(df, SimpleModel).errors)
+    error_count = check_csv_file(csv_path, SimpleModel).num_errors
 
-    # check return type
     assert isinstance(error_count, int)
-    # we expect 3 errors: one per field
     assert error_count == 0
 
 
