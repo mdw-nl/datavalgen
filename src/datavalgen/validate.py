@@ -75,11 +75,9 @@ def _prefix_row_index(error: ErrorDetails, row_index: int) -> ErrorDetails:
     return cast(ErrorDetails, prefixed)
 
 
-def _iter_row_dicts(
-    chunk, columns: Sequence[str]
-) -> Iterable[dict[str, object]]:
+def _iter_row_dicts(chunk) -> Iterable[dict[str, object]]:
     for row in chunk.itertuples(index=False, name=None):
-        yield dict(zip(columns, row))
+        yield dict(zip(chunk.columns, row))
 
 
 def check_csv_file(
@@ -130,7 +128,7 @@ def check_csv_file(
         csv_path, usecols=model_columns, chunksize=chunk_size
     ):
         # iterate thru rows in a chunck
-        for chunk_index, row_dict in enumerate(_iter_row_dicts(chunk, model_columns)):
+        for chunk_index, row_dict in enumerate(_iter_row_dicts(chunk)):
             global_row_index = row_offset + chunk_index
             try:
                 adapter.validate_python(row_dict)
