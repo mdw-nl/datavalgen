@@ -128,4 +128,5 @@ helpers/dispatch.
 
 ### Example usage
 
-TODO
+See [this repo for an example](https://github.com/mdw-nl/datavalgen-model-example) of a datavalgen
+model and how to use it.
