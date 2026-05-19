@@ -14,7 +14,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # https://github.com/actions/checkout/releases/tag/v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       # GitHub actions doens't offer regexes fir on:push:tags above.. so
       # we just fail fast here I guess....
@@ -27,16 +28,22 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        # https://github.com/actions/setup-python/releases/tag/v6.2.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
-      - name: Install package and test deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install ".[test]"
+      - name: Set up uv
+        # https://github.com/astral-sh/setup-uv/releases/tag/v8.1.0
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          version: "0.11.15"
+
+      - name: Install package and test deps from lockfile
+        run: uv sync --locked --extra test
+
       - name: Run tests
-        run: pytest
+        run: uv run --locked pytest
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -47,7 +54,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # https://github.com/actions/checkout/releases/tag/v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Compute image metadata
         id: meta
@@ -63,16 +71,16 @@ jobs:
           echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
-        # https://github.com/docker/login-action/releases/tag/v3.6.0
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
+        # https://github.com/docker/login-action/releases/tag/v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        # https://github.com/docker/build-push-action/releases/tag/v6.18.0
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        # https://github.com/docker/build-push-action/releases/tag/v7.1.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           context: .
           push: true
