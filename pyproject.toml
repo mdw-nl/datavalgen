@@ -11,9 +11,9 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.13"
 dependencies = [
-    "pandas==2.3.3",
-    "pydantic==2.12.5",
-    "polyfactory==3.1.0",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.5",
+    "polyfactory>=3.1.0",
     "run_context_py @ https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.2.tar.gz",
 ]
 
