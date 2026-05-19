@@ -1,4 +1,9 @@
-FROM python:3.13-alpine
+# python:3.14-alpine multi-platform image index:
+# https://hub.docker.com/layers/library/python/alpine3.23/images/sha256-5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+FROM docker.io/library/python@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+
+# https://github.com/astral-sh/uv/releases/tag/0.11.15
+COPY --from=ghcr.io/astral-sh/uv@sha256:e590846f4776907b254ac0f44b5b380347af5d90d668138ca7938d1b0c2f98d3 /uv /uvx /usr/local/bin/
 
 ENV DATAVALGEN_DATA=/data.csv
 
@@ -16,9 +21,16 @@ RUN mkdir -p /data \
 WORKDIR /data
 
 COPY ./pyproject.toml /app/datavalgen/pyproject.toml
+COPY ./uv.lock /app/datavalgen/uv.lock
 COPY ./README.md ./LICENSE /app/datavalgen/
 COPY ./src /app/datavalgen/src
 
-RUN pip install --no-cache-dir /app/datavalgen
+WORKDIR /app/datavalgen
+RUN uv sync --locked --no-dev --group image --no-editable
+
+ENV VIRTUAL_ENV=/app/datavalgen/.venv
+ENV PATH="/app/datavalgen/.venv/bin:$PATH"
+
+WORKDIR /data
 
 ENTRYPOINT ["datavalgen"]
