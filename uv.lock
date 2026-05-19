@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "datavalgen"
-version = "0.4.3"
+version = "0.4.4"
 source = { editable = "." }
 dependencies = [
     { name = "pandas" },
@@ -47,7 +47,7 @@ requires-dist = [
     { name = "polyfactory", specifier = ">=3.1.0,<4" },
     { name = "pydantic", specifier = ">=2.12.5,<3" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
-    { name = "run-context-py", url = "https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.2.tar.gz" },
+    { name = "run-context-py", url = "https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.3.tar.gz" },
 ]
 provides-extras = ["test"]
 
@@ -321,9 +321,9 @@ wheels = [
 
 [[package]]
 name = "run-context-py"
-version = "0.0.2"
-source = { url = "https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.2.tar.gz" }
-sdist = { hash = "sha256:9e9cd592514cab3b91744c3e98c1526ab787795bef29ce445dbb9bbc41e33dc5" }
+version = "0.0.3"
+source = { url = "https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.3.tar.gz" }
+sdist = { hash = "sha256:543802876e09214b3b46d2eb8cd0f9da035d3781594b9bb64b23359aac5cea63" }
 
 [package.metadata]
 requires-dist = [

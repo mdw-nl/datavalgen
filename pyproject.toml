@@ -15,7 +15,7 @@ dependencies = [
     "pandas>=2.3.3,<3",
     "pydantic>=2.12.5,<3",
     "polyfactory>=3.1.0,<4",
-    "run_context_py @ https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.2.tar.gz",
+    "run_context_py @ https://github.com/mdw-nl/run-context-py/archive/refs/tags/v0.0.3.tar.gz",
 ]
 
 [project.scripts]
