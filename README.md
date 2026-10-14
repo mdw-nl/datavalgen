@@ -81,6 +81,13 @@ $ datavalgen validate -m example -d examplehere.csv
 ✅ No validation errors found.
 ```
 
+Generating fake rows from a registered factory works the same way. Pass `--seed`
+when the output must be reproducible, for example when a dataset is committed or
+rebuilt in CI; without it every run gives different rows:
+```
+$ datavalgen generate -f example -n 100 -o example.csv --seed 20260323
+```
+
 ### Dockerization
 
 To make it easier, folks writing models for validation can package their model

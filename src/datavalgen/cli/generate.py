@@ -40,6 +40,12 @@ def parse_args(argv) -> Any:
     p.add_argument(
         "-n", "--num-rows", type=int, default=10, help="Rows to generate (default: 10)"
     )
+    p.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        help="Seed the factory's random generators so the same seed gives the same rows",
+    )
     out: argparse._MutuallyExclusiveGroup = p.add_mutually_exclusive_group()
     out.add_argument(
         "-o", "--output", type=Path, help="Write to this file (format via --format)"
@@ -95,6 +101,9 @@ def main(argv: list[str] | None = None) -> None:
         args.factory,
         distribution=distribution,
     )
+
+    if args.seed is not None:
+        factory_cls.seed_random(args.seed)
 
     df: DataFrame = factory_cls.batch_dataframe(args.num_rows)
 
